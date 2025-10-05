@@ -8,8 +8,7 @@ Inspired by the LangChain RAG tutorial: [`https://python.langchain.com/docs/tuto
 - Index all `.md` files recursively from a directory.
 - Persist embeddings to a local Chroma database.
 - Query with context-constrained answers and file citations.
-- Works with OpenAI or Azure OpenAI (auto-detected via env).
- - Works with OpenAI, Azure OpenAI, or Google Gemini (auto-detected via env).
+- Works with OpenAI, Azure OpenAI, or Google Gemini (auto-detected via env).
 
 ### Requirements
 - Python 3.10+
@@ -51,8 +50,7 @@ If these are set, the CLI switches to Azure automatically:
 If `GOOGLE_API_KEY` is set, the CLI uses Gemini via `langchain-google-genai`:
 - `GOOGLE_API_KEY`
 - Optional overrides:
-  - `RAG_GOOGLE_CHAT_MODEL` (default `gemini-1.0-pro`)
-    - Recommended: `gemini-2.5-flash`
+  - `RAG_GOOGLE_CHAT_MODEL` (default `gemini-2.5-flash`)
   - `RAG_GOOGLE_EMBEDDING_MODEL` (default `models/text-embedding-004`)
   - `GOOGLE_API_VERSION` (default `v1beta`; try `v1beta` if models 404 on `v1`)
 
@@ -86,7 +84,36 @@ Both commands read defaults from `.env`. You can override via flags (`--source-d
 - If `OPENAI_API_KEY` is missing (and Azure endpoint isn’t set), the script will exit with an error.
 - Ensure the `RAG_SOURCE_DIR` exists and contains Markdown files.
 
-### License
-MIT
+### MCP Server (Cursor / Model Context Protocol)
+
+This repo includes an MCP server exposing the RAG query as a tool.
+
+- Entry point: `mcp_rag_server.py`
+- Tool: `query`
+  - Args: `question` (required), `persist_dir`, `collection_name`, `model`, `temperature`, `embedding_model`
+
+Run locally (stdio):
+```bash
+python mcp_rag_server.py
+```
+
+Cursor MCP client config example (macOS): add to `~/.cursor/mcp.json`:
+```json
+{
+  "mcpServers": {
+    "rag": {
+      "command": "/Users/jmffraiz/BAT-Repos/RAG/.venv/bin/python",
+      "args": ["/Users/jmffraiz/BAT-Repos/RAG/mcp_rag_server.py"],
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  }
+}
+```
+
+Use the tool in Cursor:
+- Open the MCP Tools panel, select `rag`, run `query` with your `question`.
+- Ensure `.env` is configured (see Configuration section); the server auto-detects OpenAI/Azure/Google providers.
 
 

@@ -1,0 +1,13 @@
+{
+    "mcpServers": {
+        "BAT RAG": {
+            "command": "/Users/jmffraiz/BAT-Repos/RAG/.venv/bin/python",
+            "args": [
+                "/Users/jmffraiz/BAT-Repos/RAG/mcp_rag_server.py"
+            ],
+            "env": {
+                "PYTHONUNBUFFERED": "1"
+            }
+        }
+    }
+}
