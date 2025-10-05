@@ -1,0 +1,10 @@
+langchain==0.3.7
+langchain-openai==0.2.5
+langchain-community==0.3.7
+langchain-text-splitters==0.3.2
+langchain-google-genai==2.0.1
+chromadb==0.5.18
+openai==1.60.0
+uvloop==0.20.0 ; platform_system == "Darwin"
+python-dotenv==1.0.1
+
