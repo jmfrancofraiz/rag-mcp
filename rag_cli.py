@@ -3,7 +3,7 @@
 RAG CLI: Index markdown files into Chroma and query via OpenAI chat.
 
 Subcommands:
-  - index:  Load .md files, split, embed with OpenAI, persist to Chroma
+  - index:  Load .md files, split, embed, persist to Chroma
   - query:  Query persisted Chroma and generate answers with context
 
 Environment:

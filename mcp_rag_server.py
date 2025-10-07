@@ -6,22 +6,15 @@ from typing import Optional
 
 from dotenv import load_dotenv
 
-# Reuse logic from rag_cli
-from rag_cli import (
-    _detect_embeddings_provider,
-    _detect_chat_provider,
-    _ensure_keys_for_provider,
-    _make_embeddings,
-    build_rag_chain,
-)
-from langchain_community.vectorstores import Chroma
+# Reuse the CLI's query logic directly
+from rag_cli import build_parser, query_command
 
 # FastMCP server
 from fastmcp import FastMCP
 
 load_dotenv()
 
-mcp = FastMCP("rag")
+mcp = FastMCP("BAT RAG")
 
 
 def _perform_query(
@@ -32,74 +25,56 @@ def _perform_query(
     temperature: Optional[float] = None,
     embedding_model: Optional[str] = None,
 ) -> str:
-    # Providers and keys
-    emb_provider = _detect_embeddings_provider()
-    chat_provider = _detect_chat_provider()
-    _ensure_keys_for_provider(emb_provider)
-    _ensure_keys_for_provider(chat_provider)
-
-    # Defaults
-    repo_root = os.path.dirname(os.path.abspath(__file__))
-    default_persist = os.path.join(repo_root, ".chroma")
-
-    persist_dir = persist_dir or os.environ.get("RAG_PERSIST_DIR", default_persist)
-    collection_name = collection_name or os.environ.get("RAG_COLLECTION_NAME", "wiki-md")
-    model = model or (
-        os.environ.get("RAG_GOOGLE_CHAT_MODEL", "gemini-2.5-flash")
-        if os.environ.get("GOOGLE_API_KEY")
-        else os.environ.get("RAG_CHAT_MODEL", "gpt-4o-mini")
-    )
-    try:
-        temperature = float(temperature) if temperature is not None else float(os.environ.get("RAG_TEMPERATURE", 0.0))
-    except ValueError:
-        temperature = 0.0
-    embedding_model = embedding_model or os.environ.get("RAG_EMBEDDING_MODEL", "text-embedding-3-small")
-
+    # Delegate to the CLI's query_command, reusing its defaults via build_parser
     if not question:
-        return "ERROR: question is required"
+        return "ERROR: --question is required for query command"
 
-    if not os.path.isdir(persist_dir):
-        return f"ERROR: persist_dir does not exist or is not a directory: {persist_dir}"
+    import io
+    import contextlib
 
-    # Build vector store and chain
-    embeddings = _make_embeddings(emb_provider, embedding_model)
-    vector_store = Chroma(
-        embedding_function=embeddings,
-        persist_directory=persist_dir,
-        collection_name=collection_name,
-    )
+    parser = build_parser()
 
-    chain, retriever = build_rag_chain(
-        vector_store=vector_store, chat_provider=chat_provider, model=model, temperature=temperature
-    )
+    argv = [
+        "query",
+        "--question",
+        str(question),
+    ]
+    if persist_dir:
+        argv += ["--persist-dir", str(persist_dir)]
+    if collection_name:
+        argv += ["--collection-name", str(collection_name)]
+    if model:
+        argv += ["--model", str(model)]
+    if temperature is not None:
+        argv += ["--temperature", str(temperature)]
+    if embedding_model:
+        argv += ["--embedding-model", str(embedding_model)]
 
-    # Run retrieval for sources and answer
-    retrieved_docs = retriever.invoke(question)
-    answer = chain.invoke(question)
+    # Capture stdout/stderr so we can return a string result
+    out_buf = io.StringIO()
+    err_buf = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(out_buf), contextlib.redirect_stderr(err_buf):
+            args = parser.parse_args(argv)
+            # Call the same function used by the CLI subcommand
+            query_command(args)
+    except SystemExit as e:
+        # Convert CLI-style exits into string errors for MCP clients
+        std_err = err_buf.getvalue().strip()
+        if std_err:
+            return std_err
+        std_out = out_buf.getvalue().strip()
+        if std_out:
+            return std_out
+        return f"ERROR: query failed (exit {getattr(e, 'code', 1)})"
 
-    # Collect sources
-    sources = []
-    seen = set()
-    for d in retrieved_docs:
-        src = d.metadata.get("source") or d.metadata.get("path") or "unknown"
-        if src not in seen:
-            seen.add(src)
-            sources.append(str(src))
-
-    # Compose response text
-    lines = ["=== Answer ===", answer]
-    if sources:
-        lines.append("\n=== Sources ===")
-        lines.extend(f"- {s}" for s in sources)
-    result_text = "\n".join(lines)
-
-    return result_text
-
-
-@mcp.tool
-def ping() -> str:
-    """Health check tool to verify server connectivity."""
-    return "pong"
+    std_out = out_buf.getvalue().strip()
+    std_err = err_buf.getvalue().strip()
+    if std_out:
+        return std_out
+    if std_err:
+        return std_err
+    return ""
 
 
 @mcp.tool
@@ -111,7 +86,7 @@ def query(
     temperature: Optional[float] = None,
     embedding_model: Optional[str] = None,
 ) -> str:
-    """Query the RAG index and return the answer plus sources."""
+    """Query BAT's RAG index and return the answer plus sources."""
     return _perform_query(
         question=question,
         persist_dir=persist_dir,
