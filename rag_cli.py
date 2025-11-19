@@ -10,11 +10,11 @@ Environment:
   - OPENAI_API_KEY must be set
 
 Example usage:
-  python rag_cli.py index --source-dir "/Users/jmffraiz/BAT-Repos/RAG/Consumer Platforms.wiki" \
-                         --persist-dir "/Users/jmffraiz/BAT-Repos/RAG/.chroma"
+  python rag_cli.py index --source-dir "/Users/jmffraiz/TAB-Repos/RAG/Consumer Platforms.wiki" \
+                         --persist-dir "/Users/jmffraiz/TAB-Repos/RAG/.chroma"
 
   python rag_cli.py query --question "How do we deploy X?" \
-                         --persist-dir "/Users/jmffraiz/BAT-Repos/RAG/.chroma"
+                         --persist-dir "/Users/jmffraiz/TAB-Repos/RAG/.chroma"
 """
 
 import argparse
@@ -257,19 +257,19 @@ def _collect_sources(docs: Iterable[Document]) -> List[str]:
 
 
 def build_rag_chain(vector_store: Chroma, chat_provider: str, model: str, temperature: float):
-    retriever = vector_store.as_retriever(search_kwargs={"k": 4})
+    retriever = vector_store.as_retriever(search_kwargs={"k": 16})
 
     prompt = ChatPromptTemplate.from_template(
         """
-You are a careful assistant. Answer the user question using ONLY the context.
-If the answer isn't in the context, say you don't know.
+You are a subject expert on British American Tobacco's business. Use the following pieces of retrieved context to answer the question. 
+If you don't know the answer, just say that you don't know.
 
 Context:
 {context}
 
 Question: {question}
 
-Provide a concise, direct answer. If applicable, include short citations like [filename].
+Provide a conprehensive anwser. Include citations like [full-path-to-filename].
 """.strip()
     )
 
@@ -330,7 +330,7 @@ def query_command(args: argparse.Namespace) -> None:
         sys.exit(2)
 
     # Retrieve docs explicitly to display sources
-    print("Retrieving context (k=4)...")
+    print("Retrieving context...")
     retrieved_docs = retriever.invoke(question)
     print(f"Retrieved {len(retrieved_docs)} documents. Generating answer...")
     answer = chain.invoke(question)

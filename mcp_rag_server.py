@@ -14,7 +14,7 @@ from fastmcp import FastMCP
 
 load_dotenv()
 
-mcp = FastMCP("BAT RAG")
+mcp = FastMCP("TAB RAG")
 
 
 def _perform_query(
@@ -86,7 +86,7 @@ def query(
     temperature: Optional[float] = None,
     embedding_model: Optional[str] = None,
 ) -> str:
-    """Query BAT's RAG index and return the answer plus sources."""
+    """Query TAB's RAG index and return the answer plus sources."""
     return _perform_query(
         question=question,
         persist_dir=persist_dir,

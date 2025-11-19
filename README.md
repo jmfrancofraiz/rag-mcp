@@ -16,7 +16,7 @@ Inspired by the LangChain RAG tutorial: [`https://python.langchain.com/docs/tuto
 
 ### Installation
 ```bash
-cd /Users/jmffraiz/BAT-Repos/RAG
+cd /Users/jmffraiz/TAB-Repos/RAG
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 ```
@@ -102,8 +102,8 @@ Cursor MCP client config example (macOS): add to `~/.cursor/mcp.json`:
 {
   "mcpServers": {
     "rag": {
-      "command": "/Users/jmffraiz/BAT-Repos/RAG/.venv/bin/python",
-      "args": ["/Users/jmffraiz/BAT-Repos/RAG/mcp_rag_server.py"],
+      "command": "/Users/jmffraiz/TAB-Repos/RAG/.venv/bin/python",
+      "args": ["/Users/jmffraiz/TAB-Repos/RAG/mcp_rag_server.py"],
       "env": {
         "PYTHONUNBUFFERED": "1"
       }
